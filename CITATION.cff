@@ -1,0 +1,34 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Theorist: Prediction-Error Learning for Optimization"
+authors:
+  - family-names: "Bonilla"
+    given-names: "Johan David"
+    alias: "johanity"
+type: software
+date-released: 2026-03-10
+url: "https://github.com/johanity/theorist"
+repository-code: "https://github.com/johanity/theorist"
+license: MIT
+keywords:
+  - prediction-error
+  - optimization
+  - hyperparameter tuning
+  - meta-learning
+  - transfer learning
+  - autonomous agents
+  - scientific method
+  - first principles
+abstract: >-
+  Prediction-error optimization for Python. The agent guesses before each
+  experiment, measures how wrong it was, and builds a theory that transfers
+  across tasks. One file, zero dependencies. Based on the epistemic
+  autoresearch experiments (251 experiments, 3 agent types) where the
+  predicting agent adapted to a 5x compute shift on its first try.
+references:
+  - type: software
+    title: "Epistemic Autoresearch"
+    authors:
+      - family-names: "Bonilla"
+        given-names: "Johan David"
+    url: "https://github.com/johanity/epistemic-autoresearch"

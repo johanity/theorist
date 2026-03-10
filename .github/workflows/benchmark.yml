@@ -1,0 +1,30 @@
+name: benchmark
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e .
+      - run: python -c "
+          import theorist, random;
+          random.seed(42);
+          def f(c):
+              return {'loss': (c['x']-2)**2 + (c['y']-1)**2 + random.gauss(0,0.05)};
+          result = theorist.compare(
+              fn=f,
+              search_space={'x': [0,1,2,3,4], 'y': [0,1,2,3,4]},
+              n=20, metric='loss', minimize=True,
+          );
+          print();
+          print(result['theorist'].report())
+          "
