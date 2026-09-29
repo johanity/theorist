@@ -268,12 +268,22 @@ class Engine:
         else:
             status = "discard"
 
-        # Track per-param effects
+        # Track per-param effects.
+        #
+        # Every param is recorded, not only the ones that differ from the
+        # baseline. Under the old guard a param sitting at its baseline value
+        # was never written to _param_effects at all, so that value carried
+        # zero observations for the whole run -- and _exploit(), which
+        # assembles the best value seen per param, could never propose it. One
+        # value per param was invisible to exploitation, permanently.
+        #
+        # `changed` still means changed-from-baseline: the interaction keys
+        # below are about which params moved together.
         changed = []
         for k in config:
+            self._param_effects.setdefault(k, {}).setdefault(str(config[k]), []).append(actual)
             if config[k] != self._baseline.get(k):
                 changed.append(k)
-                self._param_effects.setdefault(k, {}).setdefault(str(config[k]), []).append(actual)
 
         # Track pairwise interactions when 2+ params changed together
         if len(changed) >= 2:
