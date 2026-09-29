@@ -426,3 +426,54 @@ class TestCompare(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestBaselineValueIsRecorded(unittest.TestCase):
+    """A param at its baseline value must still accumulate observations.
+
+    _exploit() proposes the best value seen per param, reading _param_effects.
+    While record() skipped params equal to the baseline, the baseline value of
+    every param had no entry there and could never be proposed -- so a run
+    whose optimum kept any param at its starting value could not reach it by
+    exploitation. Over 8 configurations (varied dimensions, grid sizes and
+    budgets, 60 runs each, "solved" = matched exhaustive search), recording
+    every param took 257/480 to 300/480; the largest single move was a
+    six-param separable function at n=30, 5/60 to 24/60.
+    """
+
+    def setUp(self):
+        self.engine = Engine(Brain(path=tempfile.mkdtemp()))
+        self.space = {"a": [1, 2, 3], "b": [10, 20, 30]}
+        self.baseline = {"a": 2, "b": 20}
+        self.engine.start_task(self.space, self.baseline, "baseline-recording")
+
+    def test_baseline_value_accumulates_observations(self):
+        self.engine.record({"a": 2, "b": 20}, 0.0, 5.0)
+        self.assertIn("2", self.engine._param_effects.get("a", {}),
+                      "a=2 is the baseline value and was not recorded")
+        self.assertIn("20", self.engine._param_effects.get("b", {}),
+                      "b=20 is the baseline value and was not recorded")
+
+    def test_partially_changed_config_records_both_params(self):
+        self.engine.record({"a": 3, "b": 20}, 0.0, 4.0)
+        self.assertIn("3", self.engine._param_effects["a"])
+        self.assertIn("20", self.engine._param_effects["b"],
+                      "b stayed at baseline and was dropped")
+
+    def test_exploit_can_propose_a_baseline_value(self):
+        # b=20 is clearly best, but it is also b's baseline.
+        self.engine.record({"a": 1, "b": 20}, 0.0, 1.0)
+        self.engine.record({"a": 1, "b": 10}, 0.0, 9.0)
+        self.engine.record({"a": 1, "b": 30}, 0.0, 9.0)
+        best_b = min(
+            self.engine._param_effects["b"].items(),
+            key=lambda kv: sum(kv[1]) / len(kv[1]),
+        )[0]
+        self.assertEqual(best_b, "20")
+
+    def test_interaction_keys_still_mean_changed_from_baseline(self):
+        self.engine.record({"a": 1, "b": 20}, 0.0, 3.0)
+        self.assertEqual(self.engine._interaction_effects, {},
+                         "only a moved, so there is no pair to record")
+        self.engine.record({"a": 1, "b": 30}, 0.0, 3.0)
+        self.assertIn("a=1|b=30", self.engine._interaction_effects)
